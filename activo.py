@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import* # funciones estadísticas
 
 st.title("Proyecto 1")
-st.header("Métodos cuantitativos en finanzas")
+st.header("Métodos Cuantitativos en Finanzas")
 
 
 #Funciones
@@ -21,8 +21,8 @@ def obtener_datos(activo):
     return df
 
 def calcular_rendimientos(df):
-     return df.pct_change().dropna()
-     #return np.log(df).diff().dropna()
+     #return df.pct_change().dropna()
+     return np.log(df).diff().dropna()
 
 
 #Activo
