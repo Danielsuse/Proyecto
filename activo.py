@@ -21,8 +21,8 @@ def obtener_datos(activo):
     return df
 
 def calcular_rendimientos(df):
-     #return df.pct_change().dropna()
-     return np.log(df).diff().dropna()
+     return df.pct_change().dropna()
+     #return np.log(df).diff().dropna()
 
 
 #Activo
@@ -50,7 +50,7 @@ if activo_escogido:
      # Gráfico de rendimientos diarios
      st.subheader(f"Gráfico de Rendimientos: {activo_escogido[0]}")
      fig, ax = plt.subplots(figsize=(13, 5))
-     ax.plot(df_rendimientos.index, df_rendimientos[activo_escogido], label=activo_escogido)
+     ax.plot(df_rendimientos.index, df_rendimientos[activo_escogido], label='Rendimientos Diarios (%)')
      ax.axhline(y=0, color='r', linestyle='--', alpha=0.7)
      ax.legend()
      ax.set_title(f"Rendimientos de {activo_escogido[0]}")
@@ -240,40 +240,44 @@ if var_seleccionado:
 
 
 #Rolling Window
+     st.subheader("Rolling Window")
 
      rolling_mean = df_rendimientos[activo_escogido[0]].rolling(window= 252).mean()
-
-
      rolling_std = df_rendimientos[activo_escogido[0]].rolling(window= 252).std()
-
-     VaR95_rolling = norm.ppf(1-0.95, rolling_mean, rolling_std)
-
-
-     VaR95_rolling_percent = (VaR95_rolling * 100).round(4)
-
-     VaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, '95% VaR Rolling': VaR95_rolling_percent.squeeze()})
+     
+     
+     VaR_rolling = norm.ppf(porcentaje, rolling_mean, rolling_std)
+     VaR_rolling_percent = (VaR_rolling * 100).round(4)
+     VaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} VaR Rolling': VaR_rolling_percent.squeeze()})
      VaR_rolling_df.set_index('Date', inplace=True)
 
- 
-     VaR_rolling_df.tail()
 
-     plt.figure(figsize=(14, 7))
+          #hVaR = (df_rendimientos[activo_escogido[0]].quantile(porcentaje))
+     hVaR_rolling = (df_rendimientos[activo_escogido[0]].rolling(window = 252).quantile(porcentaje))
+     hVaR_rolling_percent = (hVaR_rolling * 100).round(4)
+     hVaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} hVaR Rolling': hVaR_rolling_percent.squeeze()})
+     hVaR_rolling_df.set_index('Date', inplace=True)
 
-# Plot daily returns
-# Assuming returns are expressed as fractions, multiply by 100 to convert to percentage
-     plt.plot(df_rendimientos[activo_escogido[0]].index, df_rendimientos[activo_escogido[0]] * 100, label='Daily Returns (%)', color='blue', alpha=0.5)
 
-# Plot the 95% Rolling VaR
-     plt.plot(VaR_rolling_df.index, VaR_rolling_df['95% VaR Rolling'], label='95% Rolling VaR', color='red')
 
-# Add a title and axis labels
-     plt.title('Daily Returns and 95% Rolling VaR')
-     plt.xlabel('Date')
-     plt.ylabel('Values (%)')
+     CVaR_rolling= df_rendimientos[activo_escogido[0]][df_rendimientos[activo_escogido[0]] <= hVaR_rolling].mean()
+     CVaR_rolling_percent = (CVaR_rolling * 100).round(4)
+     CVaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} CVaR Rolling': CVaR_rolling_percent.squeeze()})
+     CVaR_rolling_df.set_index('Date', inplace=True)
+     
 
-# Add a legend
-     plt.legend()
+     # Gráfico de rendimientos diarios y Rolling window var
+     st.subheader(f"Gráfico de Rendimientos rolling Window: {activo_escogido[0]}")
+     fig_4, ax_4 = plt.subplots(figsize=(14, 7))
+     ax_4.plot(df_rendimientos[activo_escogido[0]] .index, df_rendimientos[activo_escogido[0]] * 100, label='Rendimientos Diarios (%)', color = 'blue', alpha = 0.5)
+     ax_4.plot(VaR_rolling_df.index, VaR_rolling_df[f'{var_seleccionado} VaR Rolling'], label=f'{var_seleccionado} Rolling VaR', color='red')
+     ax_4.plot(hVaR_rolling_df.index, hVaR_rolling_df[f'{var_seleccionado} hVaR Rolling'], label=f'{var_seleccionado} Rolling hVaR', color='black')
+     ax_4.plot(CVaR_rolling_df.index, CVaR_rolling_df[f'{var_seleccionado} CVaR Rolling'], label=f'{var_seleccionado} Rolling CVaR', color='purple')
+    
 
-# Show the plot
-     plt.tight_layout()
-     plt.show()
+     ax_4.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+     ax_4.legend()
+     ax_4.set_title(f"Retornos Diarios and {var_seleccionado} Rolling VaR ")
+     ax_4.set_xlabel("Fecha")
+     ax_4.set_ylabel("Valores %")
+     st.pyplot(fig_4)
