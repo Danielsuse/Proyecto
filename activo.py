@@ -249,45 +249,74 @@ if var_seleccionado:
      st.pyplot(fig_3)
 
 
-#Rolling Window
-     st.subheader("Rolling Window")
+     #### Nuevo
 
+
+
+
+
+     
+     #Calculo de medias y desviación estandar para Rolling Window de 252 días
      rolling_mean = df_rendimientos[activo_escogido[0]].rolling(window= 252).mean()
      rolling_std = df_rendimientos[activo_escogido[0]].rolling(window= 252).std()
-     
-     
+
+     #Cálculos de VaR al 95% de confianza, creación de dataframe para poder graficarlo
      VaR_rolling = norm.ppf(porcentaje, rolling_mean, rolling_std)
      VaR_rolling_percent = (VaR_rolling * 100).round(4)
      VaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} VaR Rolling': VaR_rolling_percent.squeeze()})
      VaR_rolling_df.set_index('Date', inplace=True)
-
-
-          #hVaR = (df_rendimientos[activo_escogido[0]].quantile(porcentaje))
+     
+     
+     #Cálculo de hVaR al 95% de confianza, creación de dataframe para graficarlo y poder sacar el ES
      hVaR_rolling = (df_rendimientos[activo_escogido[0]].rolling(window = 252).quantile(porcentaje))
      hVaR_rolling_percent = (hVaR_rolling * 100).round(4)
      hVaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} hVaR Rolling': hVaR_rolling_percent.squeeze()})
      hVaR_rolling_df.set_index('Date', inplace=True)
-
-
-
-     CVaR_rolling= df_rendimientos[activo_escogido[0]][df_rendimientos[activo_escogido[0]] <= hVaR_rolling].mean()
-     CVaR_rolling_percent = (CVaR_rolling * 100).round(4)
-     CVaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} CVaR Rolling': CVaR_rolling_percent.squeeze()})
-     CVaR_rolling_df.set_index('Date', inplace=True)
+     
      
 
-     # Gráfico de rendimientos diarios y Rolling window var
+
+
+    # Cálculo del VaR al 95% (rolling)
+     z_95 = norm.ppf(valor_confianza)  # Percentil 95% de la normal estándar
+     VaR_rolling = rolling_mean - z_95 * rolling_std  # VaR al 95%
+
+# Cálculo del CVaR al 95% (Expected Shortfall)
+     CVaR_rolling = rolling_mean - (norm.pdf(z_95) / (porcentaje)) * rolling_std
+
+# Convertir a porcentaje
+     CVaR_rolling_percent = (CVaR_rolling * 100).round(4)
+
+# Crear DataFrame para graficar
+     CVaR_rolling_df = pd.DataFrame({
+         'Date': df_rendimientos.index,  # Asegurar que se usa el índice correcto
+         f'{var_seleccionado} CVaR Rolling': CVaR_rolling_percent.squeeze()})
+     
+
+# Establecer índice de fecha
+     CVaR_rolling_df.set_index('Date', inplace=True)
+     
+     #Cálculo del hCVaR al 95% de confianza, creación de dataframe para graficarlo
+     hCVaR_rolling = df_rendimientos[activo_escogido[0]].rolling(window=252).apply(lambda x: x[x <= hVaR_rolling.loc[x.index[-1]]].mean(), raw=False)
+     hCVaR_rolling_percent = (hCVaR_rolling * 100).round(4)
+     hCVaR_rolling_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{var_seleccionado} hCVaR Rolling': hCVaR_rolling_percent.squeeze()})
+     hCVaR_rolling_df.set_index('Date', inplace=True)
+
+     # Gráfico de rendimientos diarios y Rolling window VaR, hVaR, CVaR al 95% y 99% de confianza 
      st.subheader(f"Gráfico de Rendimientos rolling Window: {activo_escogido[0]}")
      fig_4, ax_4 = plt.subplots(figsize=(14, 7))
-     ax_4.plot(df_rendimientos[activo_escogido[0]] .index, df_rendimientos[activo_escogido[0]] * 100, label='Rendimientos Diarios (%)', color = 'blue', alpha = 0.5)
+     ax_4.plot(df_rendimientos.index, df_rendimientos[activo_escogido] * 100, label=activo_escogido, color = 'blue', alpha = 0.5)
      ax_4.plot(VaR_rolling_df.index, VaR_rolling_df[f'{var_seleccionado} VaR Rolling'], label=f'{var_seleccionado} Rolling VaR', color='red')
      ax_4.plot(hVaR_rolling_df.index, hVaR_rolling_df[f'{var_seleccionado} hVaR Rolling'], label=f'{var_seleccionado} Rolling hVaR', color='black')
      ax_4.plot(CVaR_rolling_df.index, CVaR_rolling_df[f'{var_seleccionado} CVaR Rolling'], label=f'{var_seleccionado} Rolling CVaR', color='purple')
-    
+     ax_4.plot(hCVaR_rolling_df.index, hCVaR_rolling_df[f'{var_seleccionado} hCVaR Rolling'], label=f'{var_seleccionado} Rolling hCVaR', color='blue')
 
-     ax_4.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+     ax_4.axhline(y=0, color='r', linestyle='--', alpha=0.7)
      ax_4.legend()
-     ax_4.set_title(f"Retornos Diarios and {var_seleccionado} Rolling VaR ")
+     ax_4.set_title(f"Rendimientos de {activo_escogido[0]}")
      ax_4.set_xlabel("Fecha")
-     ax_4.set_ylabel("Valores %")
+     ax_4.set_ylabel("Rendimiento Diario")
      st.pyplot(fig_4)
+     
+     
+
