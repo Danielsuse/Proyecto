@@ -83,8 +83,6 @@ if activo_escogido:
      st.header("VaR (Asuminedo una distribucion Normal)")
 
 
-     import streamlit as st
-
      # Diccionario correcto sin lista
      porcentaje_confianza = {'95%': 0.95, '97.5%': 0.975, '99%': 0.99}
 
@@ -97,26 +95,26 @@ if activo_escogido:
  
 if var_seleccionado:
      
-     st.subheader("Aproximación paramétrica")
+     #st.subheader("Aproximación paramétrica")
      promedio = np.mean(df_rendimientos[activo_escogido[0]])
      stdev = np.std(df_rendimientos[activo_escogido[0]])
 
 
      VaR = norm.ppf(porcentaje,promedio,stdev)
 
-     col4, = st.columns(1)
-     col4.metric(f"VaR con {var_seleccionado} de confianza", f"{VaR:.4}")
+     #col4, = st.columns(1)
+     #col4.metric(f"VaR con {var_seleccionado} de confianza", f"{VaR:.4}")
      
 
-     st.subheader("Aproximación Histórica")
+     #st.subheader("Aproximación Histórica")
      # Historical VaR
      hVaR = (df_rendimientos[activo_escogido[0]].quantile(porcentaje))
 
-     col5, = st.columns(1)
-     col5.metric(f"hVaR con {var_seleccionado} de confianza", f"{hVaR:.4}")
+     #col5, = st.columns(1)
+     #col5.metric(f"hVaR con {var_seleccionado} de confianza", f"{hVaR:.4}")
      
 
-     st.subheader("Monte Carlo")
+     #st.subheader("Monte Carlo")
     # Monte Carlo
     # Number of simulations
      n_sims = 100000
@@ -126,14 +124,24 @@ if var_seleccionado:
 
      MCVaR = np.percentile(sim_returns, porcentaje*100)
 
-     col10, = st.columns(1)
-     col10.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR:.4}")
+     #col10, = st.columns(1)
+     #col10.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR:.4}")
 
-     st.subheader("CVaR (ES)")
+     #st.subheader("CVaR (ES)")
      CVaR= (df_rendimientos[activo_escogido[0]][df_rendimientos[activo_escogido[0]] <= hVaR].mean())
      
-     col13, = st.columns(1)
+     #col13, = st.columns(1)
+     #col13.metric(f"CVaR con {var_seleccionado} de confianza", f"{CVaR:.4}")
+     
+
+
+     col4, col5, col10, col13 = st.columns(4)
+     col4.metric(f"VaR con {var_seleccionado} de confianza", f"{VaR:.4}")
+     col5.metric(f"hVaR con {var_seleccionado} de confianza", f"{hVaR:.4}")
+     col10.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR:.4}")
      col13.metric(f"CVaR con {var_seleccionado} de confianza", f"{CVaR:.4}")
+
+
 
 
 #Gráfica
@@ -173,26 +181,20 @@ if var_seleccionado:
 
      df_grados_de_libertad = len(df_rendimientos)-1
 
-     st.subheader("VaR Paramétrico")
+     #st.subheader("VaR Paramétrico")
 
      t_cuantil = t.ppf(porcentaje, df_grados_de_libertad )
      VaR_t = promedio + t_cuantil * stdev
      
 
-     col16,= st.columns(1)
-     col16.metric(f"VaR con {var_seleccionado} de confianza (t-Student)", f"{VaR_t:.4}")
+     #col16,= st.columns(1)
+     #col16.metric(f"VaR con {var_seleccionado} de confianza (t-Student)", f"{VaR_t:.4}")
 
      
      
-     st.subheader("Aproximación Histórica")
+     #st.subheader("Aproximación Histórica")
      # Historical VaR
-     hVaR = (df_rendimientos[activo_escogido[0]].quantile(porcentaje))
-
-
-
-     col6, = st.columns(1)
-     col6.metric(f"hVaR con {var_seleccionado} de confianza", f"{hVaR:.4}")
-
+     #hVaR = (df_rendimientos[activo_escogido[0]].quantile(porcentaje))
 
 
 
@@ -207,15 +209,23 @@ if var_seleccionado:
      MCVaR_t = np.percentile(sim_returns, porcentaje*100)
      
 
-     col19,  = st.columns(1)
-     col19.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR_t:.4}")
+     #col19,  = st.columns(1)
+     #col19.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR_t:.4}")
 
-     st.subheader("CVaR (ES)")
-     CVaR= (df_rendimientos[activo_escogido[0]][df_rendimientos[activo_escogido[0]] <= hVaR].mean())
+     #st.subheader("CVaR (ES)")
+     #CVaR= (df_rendimientos[activo_escogido[0]][df_rendimientos[activo_escogido[0]] <= hVaR].mean())
      
-     col7, = st.columns(1)
-     col7.metric(f"CVaR con {var_seleccionado} de confianza", f"{CVaR:.4}")
      
+
+     col16, col5, col19, col13 =  st.columns(4)
+     col16.metric(f"VaR con {var_seleccionado} de confianza", f"{VaR_t:.4}")
+     col5.metric(f"hVaR con {var_seleccionado} de confianza", f"{hVaR:.4}")
+     col19.metric(f"MCVaR con {var_seleccionado} de confianza", f"{MCVaR_t:.4}")
+     col13.metric(f"CVaR con {var_seleccionado} de confianza", f"{CVaR:.4}")
+
+
+
+
     #Gráfica
      fig_3, ax_3 = plt.subplots(figsize=(10, 5))
      n, bins, patches = plt.hist(df_rendimientos[activo_escogido[0]], bins=50, color='blue', alpha=0.7, label='Retornos')
