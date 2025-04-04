@@ -278,11 +278,11 @@ if var_seleccionado:
 
 
     # Cálculo del VaR al 95% (rolling)
-     z_95 = norm.ppf(valor_confianza)  # Percentil 95% de la normal estándar
-     VaR_rolling = rolling_mean - z_95 * rolling_std  # VaR al 95%
+     z = norm.ppf(valor_confianza)  # Percentil 95% de la normal estándar
+     VaR_rolling = rolling_mean - z * rolling_std  # VaR al 95%
 
 # Cálculo del CVaR al 95% (Expected Shortfall)
-     CVaR_rolling = rolling_mean - (norm.pdf(z_95) / (porcentaje)) * rolling_std
+     CVaR_rolling = rolling_mean - (norm.pdf(z) / (porcentaje)) * rolling_std
 
 # Convertir a porcentaje
      CVaR_rolling_percent = (CVaR_rolling * 100).round(4)
@@ -317,6 +317,97 @@ if var_seleccionado:
      ax_4.set_xlabel("Fecha")
      ax_4.set_ylabel("Rendimiento Diario")
      st.pyplot(fig_4)
+
+
+
+
+
+##Inciso D Vences
+     rend = (df_rendimientos[activo_escogido[0]]*100).iloc[251:]
+     B1 = VaR_rolling_df[f'{var_seleccionado} VaR Rolling'].iloc[251:]
+
+     C1 = CVaR_rolling_df[f'{var_seleccionado} CVaR Rolling'].iloc[251:]
+
+     v_var_1 = (rend < B1).sum()
+     v_cvar_1 =(rend < C1).sum()
+
+     p11=v_var_1/len(B1)
+     p12=v_cvar_1/len(B1)
+
+
+#print(f'Violaciones para Var 95% = {v_var_1} y un porcentaje de {(p11*100).round(4)}%')
+#print(f'Violaciones para CVar 95% = {v_cvar_1} y un porcentaje de {(p12*100).round(4)}%')
+#print(f'Violaciones para Var 97.5%= {v_var_2} y un porcentaje de {(p21*100).round(4)}%')
+#print(f'Violaciones para CVar 97.5%= {v_cvar_2} y un porcentaje de {(p22*100).round(4)}%')
+#print(f'Violaciones para Var 99% = {v_var_3} y un porcentaje de {(p31*100).round(4)}%')
+#print(f'Violaciones para CVar 99% = {v_cvar_3} y un porcentaje de {(p32*100).round(4)}%')
+
+# Diccionario con los datos
+
+     
+     data = {
+               'Nivel de Confianza': [var_seleccionado,var_seleccionado],
+          'Métrica': ['VaR','CVaR'],
+          'Violaciones': [v_var_1, v_cvar_1, ],
+          'Porcentaje (%)': [
+               (p11 * 100).round(4),
+               (p12 * 100).round(4)
+          ]
+          }
+
+          # Crear el DataFrame
+     df_violaciones = pd.DataFrame(data)
+
+          # Mostrar el DataFrame
+     st.dataframe(df_violaciones)
+          
+     
+          
      
      
+     st.header("VaR estimado con volatilidad móvil y asumiendo distribución normal")
+
+     porcentaje_confianza = [0.95, 0.99]
+     violaciones = []
+     fig_5, ax_5 = plt.subplots(figsize=(14, 7))
+     ax_5.plot(df_rendimientos[activo_escogido[0]] .index, df_rendimientos[activo_escogido[0]] * 100, label='Rendimientos Diarios (%)', color = 'blue', alpha = 0.5)
+
+     for confianza in porcentaje_confianza:
+          q_alpha = norm.ppf(1-confianza)
+          rolling_std = df_rendimientos[activo_escogido[0]].rolling(window= 252).std()
+
+          VaR_vm = rolling_std * q_alpha
+          VaR_vm_percent = (VaR_vm * 100).round(4)
+          VaR_vm_df = pd.DataFrame({'Date': df_rendimientos[activo_escogido[0]].index, f'{confianza} VaR Rolling': VaR_vm_percent.squeeze()})
+          VaR_vm_df.set_index('Date', inplace=True)
+
+          # Gráfico de rendimientos diarios y var volatil
+          col = 'green'	
+          if confianza == 0.95:
+               col = 'blue'
+          ax_5.plot(VaR_vm_df.index, VaR_vm_df[f'{confianza} VaR Rolling'], label=f'{confianza} VaR', color=col)
+
+          # Unimos ambos DataFrames en base a la fecha
+          df_merged = pd.merge(df_rendimientos[activo_escogido[0]] * 100 , VaR_vm_df[f'{confianza} VaR Rolling'], on='Date')
+          # Idenfificamos las violaciones
+          df_merged["Violacion_VaR"] = df_merged[activo_escogido[0]] < df_merged[f'{confianza} VaR Rolling']
+          # Contamos ocurrencias
+          conteo_violaciones = int(df_merged["Violacion_VaR"].sum())
+
+          violaciones.append(conteo_violaciones)
+          tam = (int(VaR_vm_df.count().sum()))
+
+
+
+
+
+     ax_5.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+     ax_5.legend()
+     ax_5.set_title("Retornos Diarios y VaR")
+     ax_5.set_xlabel("Fecha")
+     ax_5.set_ylabel("Valores %")
+     st.pyplot(fig_5)
+     dt = pd.DataFrame({'Confianza': ['95 %', '99 %'], 'Violaciones de VaR': violaciones, 'Porcentaje de Violaciones de VaR': [100*x / tam for x in violaciones]})
+
+     st.dataframe(dt, hide_index=True)        
 
