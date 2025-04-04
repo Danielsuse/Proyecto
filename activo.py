@@ -274,9 +274,6 @@ if var_seleccionado:
      hVaR_rolling_df.set_index('Date', inplace=True)
      
      
-
-
-
     # Cálculo del VaR al 95% (rolling)
      z = norm.ppf(valor_confianza)  # Percentil 95% de la normal estándar
      VaR_rolling = rolling_mean - z * rolling_std  # VaR al 95%
@@ -317,8 +314,6 @@ if var_seleccionado:
      ax_4.set_xlabel("Fecha")
      ax_4.set_ylabel("Rendimiento Diario")
      st.pyplot(fig_4)
-
-
 
 
 
